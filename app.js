@@ -23,6 +23,7 @@ const fText = $("f-text");
 const fDate = $("f-date");
 const fStatus = $("f-status");
 const fMemo = $("f-memo");
+const kindInputs = form.querySelectorAll("input[name=kind]");
 
 // 상세 다이얼로그
 const detailDialog = $("detail-dialog");
@@ -56,6 +57,7 @@ function load() {
       id: t.id,
       text: t.text,
       date: t.date || dateKey(new Date(t.id)),
+      kind: t.kind || "todo",
       status: t.status || (t.done ? "done" : "todo"),
       memo: t.memo || "",
     }));
@@ -70,6 +72,10 @@ function save() {
   } catch {
     // 저장이 막힌 환경(시크릿 모드 등)에서는 메모리에만 유지
   }
+}
+
+function isTask(t) {
+  return t.kind === "todo";
 }
 
 function findTodo(id) {
@@ -102,20 +108,31 @@ function renderCalendar() {
     if (key === todayKey) cell.classList.add("today");
     cell.addEventListener("click", () => openForm(null, key));
 
+    const holiday = HOLIDAYS[key];
     const num = document.createElement("span");
     num.className = "day-num";
-    if (date.getDay() === 0) num.classList.add("sun");
-    if (date.getDay() === 6) num.classList.add("sat");
+    if (date.getDay() === 0 || holiday) num.classList.add("sun");
+    else if (date.getDay() === 6) num.classList.add("sat");
     num.innerHTML = `<span>${date.getDate()}</span>`;
     cell.appendChild(num);
 
-    // 달력에는 제목만 표시 (메모는 상세 창에서만)
-    for (const todo of todos.filter((t) => t.date === key)) {
+    if (holiday) {
+      const label = document.createElement("span");
+      label.className = `chip holiday ${holiday.type}`;
+      label.textContent = holiday.name;
+      cell.appendChild(label);
+    }
+
+    // 달력에는 제목만 표시 (메모는 상세 창에서만). 하루 종일 일정을 할 일보다 위에.
+    const dayItems = todos
+      .filter((t) => t.date === key)
+      .sort((a, b) => isTask(a) - isTask(b));
+    for (const todo of dayItems) {
       const chip = document.createElement("button");
       chip.type = "button";
-      chip.className = `chip ${todo.status}`;
+      chip.className = isTask(todo) ? `chip ${todo.status}` : "chip event";
       chip.textContent = todo.text;
-      chip.title = `${todo.text} · ${STATUS_LABEL[todo.status]}`;
+      chip.title = isTask(todo) ? `${todo.text} · ${STATUS_LABEL[todo.status]}` : `${todo.text} · 하루 종일`;
       chip.addEventListener("click", (e) => {
         e.stopPropagation();
         openDetail(todo.id);
@@ -129,7 +146,8 @@ function renderCalendar() {
 
 function renderList() {
   list.innerHTML = "";
-  const items = todos
+  const tasks = todos.filter(isTask);
+  const items = tasks
     .filter((t) => filter === "all" || t.status === filter)
     .sort((a, b) => a.date.localeCompare(b.date) || a.id - b.id);
 
@@ -166,7 +184,7 @@ function renderList() {
     list.appendChild(li);
   }
 
-  const n = (s) => todos.filter((t) => t.status === s).length;
+  const n = (s) => tasks.filter((t) => t.status === s).length;
   count.textContent = `미완 ${n("todo")} · 진행중 ${n("doing")} · 완료 ${n("done")}`;
 }
 
@@ -176,9 +194,13 @@ function renderDetail() {
     detailDialog.close();
     return;
   }
-  const done = todo.status === "done";
+  const task = isTask(todo);
+  const done = task && todo.status === "done";
   $("d-text").textContent = todo.text;
   $("d-date").textContent = formatDate(todo.date);
+  dCheck.hidden = !task;
+  $("d-kind").hidden = task;
+  document.querySelector(".status-picker").hidden = !task;
   $("d-memo").textContent = todo.memo || "메모 없음";
   dCheck.checked = done;
   dCheck.closest("label").classList.toggle("done", done);
@@ -203,9 +225,15 @@ function openForm(id, date) {
   fText.value = todo ? todo.text : "";
   fDate.value = todo ? todo.date : date || dateKey(new Date());
   fStatus.value = todo ? todo.status : "todo";
+  setFormKind(todo ? todo.kind : "todo");
   fMemo.value = todo ? todo.memo : "";
   formDialog.showModal();
   fText.focus();
+}
+
+function setFormKind(kind) {
+  kindInputs.forEach((i) => (i.checked = i.value === kind));
+  $("f-status-field").hidden = kind !== "todo";
 }
 
 function openDetail(id) {
@@ -253,7 +281,7 @@ filterButtons.forEach((btn) => {
 });
 
 $("clear-done").addEventListener("click", () => {
-  todos = todos.filter((t) => t.status !== "done");
+  todos = todos.filter((t) => !(isTask(t) && t.status === "done"));
   save();
   render();
 });
@@ -261,13 +289,16 @@ $("clear-done").addEventListener("click", () => {
 form.addEventListener("submit", () => {
   const text = fText.value.trim();
   if (!text) return;
-  const data = { text, date: fDate.value, status: fStatus.value, memo: fMemo.value.trim() };
+  const kind = form.querySelector("input[name=kind]:checked").value;
+  const data = { text, kind, date: fDate.value, status: fStatus.value, memo: fMemo.value.trim() };
   const todo = findTodo(editingId);
   if (todo) Object.assign(todo, data);
   else todos.push({ id: Date.now(), ...data });
   save();
   render();
 });
+
+kindInputs.forEach((i) => i.addEventListener("change", () => setFormKind(i.value)));
 
 $("form-cancel").addEventListener("click", () => formDialog.close());
 

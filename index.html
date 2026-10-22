@@ -52,13 +52,17 @@
   <dialog id="form-dialog">
     <form id="todo-form" method="dialog">
       <h3 id="form-title">할 일 추가</h3>
-      <label>할 일
+      <div class="kind-picker" role="radiogroup" aria-label="종류">
+        <label><input type="radio" name="kind" value="todo" checked> 할 일</label>
+        <label><input type="radio" name="kind" value="event"> 하루 종일 일정</label>
+      </div>
+      <label>제목
         <input id="f-text" type="text" autocomplete="off" required>
       </label>
       <label>날짜
         <input id="f-date" type="date" required>
       </label>
-      <label>상태
+      <label id="f-status-field">상태
         <select id="f-status">
           <option value="todo">미완</option>
           <option value="doing">진행중</option>
@@ -66,7 +70,7 @@
         </select>
       </label>
       <label>메모
-        <textarea id="f-memo" rows="4" placeholder="메모는 할 일을 눌렀을 때만 보여요"></textarea>
+        <textarea id="f-memo" rows="4" placeholder="메모는 눌렀을 때만 보여요"></textarea>
       </label>
       <div class="dialog-actions">
         <button type="button" id="form-cancel">취소</button>
@@ -80,6 +84,7 @@
     <div class="detail">
       <label class="detail-head">
         <input type="checkbox" id="d-check">
+        <span id="d-kind" class="kind-tag">하루 종일</span>
         <h3 id="d-text"></h3>
       </label>
       <p id="d-date" class="muted"></p>
@@ -101,6 +106,7 @@
     </div>
   </dialog>
 
+  <script src="holidays.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
