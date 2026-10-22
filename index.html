@@ -8,26 +8,98 @@
 </head>
 <body>
   <main class="app">
-    <h1>할 일 목록</h1>
+    <nav class="tabs" role="tablist">
+      <button type="button" role="tab" data-tab="calendar" class="active">달력</button>
+      <button type="button" role="tab" data-tab="list">목록</button>
+    </nav>
 
-    <form id="todo-form" class="todo-form">
-      <input id="todo-input" type="text" placeholder="할 일을 입력하세요" autocomplete="off" required>
-      <button type="submit">추가</button>
-    </form>
+    <!-- 달력 탭 -->
+    <section id="calendar-view" class="view">
+      <div class="cal-toolbar">
+        <button type="button" id="prev-month" class="icon-btn" aria-label="이전 달">‹</button>
+        <h2 id="cal-title"></h2>
+        <button type="button" id="next-month" class="icon-btn" aria-label="다음 달">›</button>
+        <span class="spacer"></span>
+        <button type="button" class="icon-btn add-btn" aria-label="할 일 추가">+</button>
+        <button type="button" id="go-today" class="today-btn" aria-label="오늘로 이동"></button>
+      </div>
+      <div class="weekdays">
+        <span class="sun">일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span class="sat">토</span>
+      </div>
+      <div id="cal-grid" class="cal-grid"></div>
+    </section>
 
-    <div class="filters" role="group" aria-label="필터">
-      <button type="button" data-filter="all" class="active">전체</button>
-      <button type="button" data-filter="active">진행 중</button>
-      <button type="button" data-filter="done">완료</button>
-    </div>
-
-    <ul id="todo-list" class="todo-list"></ul>
-
-    <footer class="footer">
-      <span id="todo-count"></span>
-      <button type="button" id="clear-done">완료 항목 삭제</button>
-    </footer>
+    <!-- 목록 탭 -->
+    <section id="list-view" class="view" hidden>
+      <div class="list-toolbar">
+        <div class="filters" role="group" aria-label="상태 필터">
+          <button type="button" data-filter="all" class="active">전체</button>
+          <button type="button" data-filter="todo">미완</button>
+          <button type="button" data-filter="doing">진행중</button>
+          <button type="button" data-filter="done">완료</button>
+        </div>
+        <button type="button" class="icon-btn add-btn" aria-label="할 일 추가">+</button>
+      </div>
+      <ul id="todo-list" class="todo-list"></ul>
+      <footer class="footer">
+        <span id="todo-count"></span>
+        <button type="button" id="clear-done">완료 항목 삭제</button>
+      </footer>
+    </section>
   </main>
+
+  <!-- 할 일 등록/수정 -->
+  <dialog id="form-dialog">
+    <form id="todo-form" method="dialog">
+      <h3 id="form-title">할 일 추가</h3>
+      <label>할 일
+        <input id="f-text" type="text" autocomplete="off" required>
+      </label>
+      <label>날짜
+        <input id="f-date" type="date" required>
+      </label>
+      <label>상태
+        <select id="f-status">
+          <option value="todo">미완</option>
+          <option value="doing">진행중</option>
+          <option value="done">완료</option>
+        </select>
+      </label>
+      <label>메모
+        <textarea id="f-memo" rows="4" placeholder="메모는 할 일을 눌렀을 때만 보여요"></textarea>
+      </label>
+      <div class="dialog-actions">
+        <button type="button" id="form-cancel">취소</button>
+        <button type="submit" class="primary">저장</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- 할 일 상세 -->
+  <dialog id="detail-dialog">
+    <div class="detail">
+      <label class="detail-head">
+        <input type="checkbox" id="d-check">
+        <h3 id="d-text"></h3>
+      </label>
+      <p id="d-date" class="muted"></p>
+      <div class="status-picker" role="group" aria-label="상태">
+        <button type="button" data-status="todo">미완</button>
+        <button type="button" data-status="doing">진행중</button>
+        <button type="button" data-status="done">완료</button>
+      </div>
+      <div class="memo-box">
+        <strong>메모</strong>
+        <p id="d-memo"></p>
+      </div>
+      <div class="dialog-actions">
+        <button type="button" id="d-delete" class="danger">삭제</button>
+        <span class="spacer"></span>
+        <button type="button" id="d-edit">수정</button>
+        <button type="button" id="d-close" class="primary">닫기</button>
+      </div>
+    </div>
+  </dialog>
 
   <script src="app.js"></script>
 </body>
